@@ -137,9 +137,43 @@
 
     <!-- Transactions List -->
     <div class="card">
-      <div class="card-header">
+      <div class="card-header" style="flex-wrap: wrap; gap: 16px; align-items: center;">
         <div class="card-title">Últimas transações <Info size="14" class="info-icon" /></div>
-        <a href="#" class="link-blue" @click.prevent="$router.push('/statements')">Ver todas <ChevronRight size="16" /></a>
+        
+        <div class="table-toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-left: auto;">
+          <!-- Search Input -->
+          <div class="search-input-wrapper" style="position: relative; width: 200px;">
+            <Search size="14" class="search-icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar..." style="width: 100%; padding-left: 34px; font-size: 0.8rem;">
+          </div>
+
+          <!-- Filtros Dropdown Button -->
+          <div class="filter-dropdown-wrapper" style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue filter-toggle-btn" style="padding: 6px 12px; font-size: 0.8rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="14" />
+              <span>Filtros</span>
+              <span class="active-badge" v-if="activeFiltersCount > 0">{{ activeFiltersCount }}</span>
+            </button>
+
+            <!-- Popover -->
+            <div class="filter-popover card" v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 240px; z-index: 90; box-shadow: var(--shadow-lg); padding: 16px; background: white; border-radius: var(--radius-lg);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <strong style="font-size: 0.85rem; color: var(--text-primary);">Filtros</strong>
+                <button class="btn-text text-muted" style="font-size: 0.75rem; border: none; background: transparent; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div class="form-group">
+                <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; display: block;">Status</label>
+                <select class="form-select" v-model="filterStatus" style="font-size: 0.8rem; width: 100%;">
+                  <option>Todos</option>
+                  <option>Aprovado</option>
+                  <option>Pendente</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <a href="#" class="link-blue" @click.prevent="$router.push('/statements')">Ver todas <ChevronRight size="16" /></a>
+        </div>
       </div>
       <div class="table-responsive">
         <table class="table hoverable">
@@ -154,7 +188,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tx in recentTransactions" :key="tx.id" class="clickable-row">
+            <tr v-for="tx in filteredRecentTransactions" :key="tx.id" class="clickable-row">
               <td class="text-blue">{{ tx.id }}</td>
               <td>{{ tx.payer }}</td>
               <td>R$ {{ tx.value.toFixed(2) }}</td>
@@ -176,14 +210,32 @@
 </template>
 
 <script>
-import { Plus, ExternalLink, Wallet, Info, ArrowUp, Clock, Calendar, ArrowRightLeft, CheckCircle2, Clock3, ChevronRight } from 'lucide-vue-next';
+import { Plus, ExternalLink, Wallet, Info, ArrowUp, Clock, Calendar, ArrowRightLeft, CheckCircle2, Clock3, ChevronRight, Search, SlidersHorizontal } from 'lucide-vue-next';
 import Chart from 'chart.js/auto';
 
 export default {
   name: 'MerchantOverviewView',
-  components: { Plus, ExternalLink, Wallet, Info, ArrowUp, Clock, Calendar, ArrowRightLeft, CheckCircle2, Clock3, ChevronRight },
+  components: { Plus, ExternalLink, Wallet, Info, ArrowUp, Clock, Calendar, ArrowRightLeft, CheckCircle2, Clock3, ChevronRight, Search, SlidersHorizontal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
+      searchQuery: '',
+      filterStatus: 'Todos',
+      showFilterDropdown: false,
       recentTransactions: [
         { id: 'PIX-8f3d2e7a1c', payer: 'João da Silva', value: 250.00, status: 'Aprovado', date: '21/05/2025, 10:23' },
         { id: 'PIX-b7a91d3f4e', payer: 'Maria Oliveira', value: 1480.00, status: 'Aprovado', date: '21/05/2025, 09:47' },
@@ -193,6 +245,25 @@ export default {
       ],
       volumeChartInstance: null,
       donutChartInstance: null
+    }
+  },
+  computed: {
+    activeFiltersCount() {
+      return this.filterStatus !== 'Todos' ? 1 : 0;
+    },
+    filteredRecentTransactions() {
+      let filtered = this.recentTransactions;
+      if (this.filterStatus !== 'Todos') {
+        filtered = filtered.filter(t => t.status === this.filterStatus);
+      }
+      if (this.searchQuery) {
+        const q = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(t => 
+          t.id.toLowerCase().includes(q) ||
+          t.payer.toLowerCase().includes(q)
+        );
+      }
+      return filtered;
     }
   },
   mounted() {
@@ -271,6 +342,13 @@ export default {
           plugins: { legend: { display: false }, tooltip: { enabled: false } }
         }
       });
+    }
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterStatus = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
     }
   }
 }

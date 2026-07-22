@@ -80,6 +80,40 @@ body {
   min-height: 100vh;
 }
 
+/* Global Cursor Pointer Rules */
+button,
+.btn,
+select,
+.form-select,
+a,
+.nav-item,
+.page-btn,
+.clickable-row,
+.hoverable tbody tr,
+.table tbody tr,
+.notification-wrapper,
+.user-profile-wrapper,
+.mobile-menu-btn,
+.filter-toggle-btn,
+.tab,
+.modal-close,
+.close-btn {
+  cursor: pointer !important;
+}
+
+.active-badge {
+  background: var(--accent-blue);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }

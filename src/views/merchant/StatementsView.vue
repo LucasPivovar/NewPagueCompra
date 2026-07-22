@@ -12,56 +12,63 @@
       </div>
     </div>
 
-    <!-- Filtros avançados -->
-    <div class="card filters-card mb-4">
-      <div class="card-header border-none pb-0">
-        <h3 class="filters-title">Filtros avançados</h3>
-      </div>
-      <div class="card-body">
-        <div class="filters-grid">
-          <div class="form-group">
-            <label>Período</label>
-            <div class="date-range-input">
-              <input type="text" placeholder="01/05/2025">
-              <Calendar size="16" class="text-muted" />
-              <span class="separator">+</span>
-              <input type="text" placeholder="21/05/2025">
-              <Calendar size="16" class="text-muted" />
+    <!-- Toolbar de Busca e Filtros Dropdown -->
+    <div class="card mb-4">
+      <div class="card-body" style="padding: 16px 20px;">
+        <div class="table-toolbar" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <!-- Search Input -->
+          <div class="search-input-wrapper" style="position: relative; flex: 1; min-width: 240px; max-width: 420px;">
+            <Search size="16" class="search-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por descrição ou ID..." style="width: 100%; padding-left: 40px;">
+          </div>
+
+          <!-- Filtros Button & Dropdown -->
+          <div class="filter-dropdown-wrapper" style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue filter-toggle-btn" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="16" />
+              <span>Filtros</span>
+              <span class="active-badge" v-if="activeFiltersCount > 0">{{ activeFiltersCount }}</span>
+            </button>
+
+            <!-- Dropdown Popover -->
+            <div class="filter-popover card" v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 320px; z-index: 90; box-shadow: var(--shadow-lg); padding: 20px; background: white; border-radius: var(--radius-lg);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <strong style="font-size: 0.95rem; color: var(--text-primary);">Filtros</strong>
+                <button class="btn-text text-muted" style="font-size: 0.8rem; border: none; background: transparent; cursor: pointer;" @click="clearFilters">Limpar filtros</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block;">Tipo de movimentação</label>
+                  <select class="form-select" v-model="filterType">
+                    <option>Todos</option>
+                    <option>Cobrança Pix recebida</option>
+                    <option>Saque para conta bancária</option>
+                    <option>Tarifa de saque</option>
+                    <option>Bloqueio de saldo</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block;">Status</label>
+                  <select class="form-select" v-model="filterStatus">
+                    <option>Todos</option>
+                    <option>Aprovado</option>
+                    <option>Concluído</option>
+                    <option>Pendente</option>
+                    <option>Bloqueado</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block;">Ordenar por</label>
+                  <select class="form-select" v-model="sortBy">
+                    <option>Mais recentes</option>
+                    <option>Mais antigos</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Tipo de movimentação</label>
-            <select class="form-select" v-model="filterType">
-              <option>Todos</option>
-              <option>Cobrança Pix recebida</option>
-              <option>Saque para conta bancária</option>
-              <option>Tarifa de saque</option>
-              <option>Bloqueio de saldo</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select class="form-select" v-model="filterStatus">
-              <option>Todos</option>
-              <option>Aprovado</option>
-              <option>Concluído</option>
-              <option>Pendente</option>
-              <option>Bloqueado</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Busca geral</label>
-            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por descrição ou ID">
-          </div>
-          <div class="form-group">
-            <label>Ordenar por</label>
-            <select class="form-select" v-model="sortBy">
-              <option>Mais recentes</option>
-              <option>Mais antigos</option>
-            </select>
-          </div>
-          <div class="filter-actions">
-            <button class="btn btn-text" @click="clearFilters">Limpar filtros</button>
           </div>
         </div>
       </div>
@@ -119,17 +126,33 @@
 </template>
 
 <script>
-import { ChevronDown, FileText, Calendar, ChevronLeft, ChevronRight, CheckCircle2, Clock } from 'lucide-vue-next';
+import { ChevronDown, FileText, Calendar, ChevronLeft, ChevronRight, CheckCircle2, Clock, Search, SlidersHorizontal } from 'lucide-vue-next';
 
 export default {
   name: 'MerchantStatementsView',
-  components: { ChevronDown, FileText, Calendar, ChevronLeft, ChevronRight, CheckCircle2, Clock },
+  components: { ChevronDown, FileText, Calendar, ChevronLeft, ChevronRight, CheckCircle2, Clock, Search, SlidersHorizontal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       searchQuery: '',
       filterType: 'Todos',
       filterStatus: 'Todos',
       sortBy: 'Mais recentes',
+      showFilterDropdown: false,
       statements: [
         { date: '21/05/2025, 10:23', description: 'Cobrança Pix recebida', id: 'PIX-8f3d2e7a1c', in: 'R$ 250,00', out: '–', balance: 'R$ 48.750,32', status: 'Aprovado' },
         { date: '21/05/2025, 09:47', description: 'Saque para conta bancária', id: 'SAC-a91b3c4d5e', in: '–', out: 'R$ 2.500,00', balance: 'R$ 48.500,32', status: 'Concluído' },
@@ -143,6 +166,13 @@ export default {
     }
   },
   computed: {
+    activeFiltersCount() {
+      let count = 0;
+      if (this.filterType !== 'Todos') count++;
+      if (this.filterStatus !== 'Todos') count++;
+      if (this.sortBy !== 'Mais recentes') count++;
+      return count;
+    },
     filteredStatements() {
       let filtered = this.statements;
       
@@ -183,6 +213,9 @@ export default {
       this.filterType = 'Todos';
       this.filterStatus = 'Todos';
       this.sortBy = 'Mais recentes';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
     }
   }
 }
