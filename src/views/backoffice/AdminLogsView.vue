@@ -127,6 +127,8 @@ export default {
         filtered = filtered.filter(l => 
           l.usuario.toLowerCase().includes(q) ||
           l.acao.toLowerCase().includes(q)
+        );
+      }
       return filtered;
     }
   },
