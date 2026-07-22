@@ -342,7 +342,7 @@ export default {
           plugins: { legend: { display: false }, tooltip: { enabled: false } }
         }
       });
-    }
+    },
     clearFilters() {
       this.searchQuery = '';
       this.filterStatus = 'Todos';

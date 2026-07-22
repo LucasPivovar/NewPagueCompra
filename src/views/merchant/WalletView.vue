@@ -65,46 +65,58 @@
 
     <!-- Contas Bancárias -->
     <div class="section-container mt-4">
-      <div class="section-header">
-        <div>
-          <div class="card-title">Contas bancárias cadastradas</div>
+      <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
+        <div class="card-title">Contas bancárias cadastradas</div>
+
+        <div style="display: flex; gap: 12px; align-items: center; margin-left: auto; flex-wrap: wrap;">
+          <!-- Search Input -->
+          <div style="position: relative; width: 220px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchBank" placeholder="Buscar conta..." style="width: 100%; padding-left: 34px; font-size: 0.8rem;" />
+          </div>
+
+          <!-- Filtros Button -->
+          <div style="position: relative;" v-click-outside="closeBankFilter">
+            <button class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 6px;" @click.stop="showBankFilter = !showBankFilter">
+              <SlidersHorizontal size="14" />
+              Filtros
+              <span v-if="bankFilterStatus !== 'Todos'" style="background: var(--accent-blue); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center;">1</span>
+            </button>
+            <!-- Popover -->
+            <div v-if="showBankFilter" style="position: absolute; top: calc(100% + 8px); right: 0; width: 220px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <strong style="font-size: 0.85rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.75rem; cursor: pointer;" @click="bankFilterStatus = 'Todos'">Limpar</button>
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 6px;">Status</label>
+                <select class="form-select" v-model="bankFilterStatus" style="font-size: 0.8rem; width: 100%; cursor: pointer;">
+                  <option>Todos</option>
+                  <option>Principal</option>
+                  <option>Secundária</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-secondary btn-sm" @click="openAddAccount">+ Adicionar conta</button>
         </div>
-        <button class="btn btn-secondary btn-sm" @click="openAddAccount">+ Adicionar conta</button>
       </div>
 
       <div class="bank-accounts-list">
-        <div class="bank-card">
-          <div class="bank-logo bb">BB</div>
+        <div class="bank-card" v-for="account in filteredBankAccounts" :key="account.id">
+          <div class="bank-logo" :class="account.logoClass">{{ account.logoText }}</div>
           <div class="bank-info">
-            <strong>Banco do Brasil S.A.</strong>
-            <span>Agência 1234-5 • Conta 67890-1</span>
+            <strong>{{ account.name }}</strong>
+            <span>Agência {{ account.agency }} • Conta {{ account.account }}</span>
           </div>
           <div class="bank-actions">
-            <span class="badge badge-success-light">Conta principal</span>
-            <ActionDropdown :actions="bankActions" @action="handleBankAction($event, 'bb')" />
+            <span v-if="account.isMain" class="badge badge-success-light">Conta principal</span>
+            <ActionDropdown :actions="bankActions" @action="handleBankAction($event, account.id)" />
           </div>
         </div>
-
-        <div class="bank-card">
-          <div class="bank-logo itau">IT</div>
-          <div class="bank-info">
-            <strong>Itaú Unibanco S.A.</strong>
-            <span>Agência 5678 • Conta 12345-6</span>
-          </div>
-          <div class="bank-actions">
-            <ActionDropdown :actions="bankActions" @action="handleBankAction($event, 'itau')" />
-          </div>
-        </div>
-
-        <div class="bank-card">
-          <div class="bank-logo nubank">NU</div>
-          <div class="bank-info">
-            <strong>Nu Pagamentos S.A. (NuBank)</strong>
-            <span>Agência 0001 • Conta 98765432-1</span>
-          </div>
-          <div class="bank-actions">
-            <ActionDropdown :actions="bankActions" @action="handleBankAction($event, 'nubank')" />
-          </div>
+        <div v-if="filteredBankAccounts.length === 0" style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          Nenhuma conta encontrada.
         </div>
       </div>
     </div>
@@ -128,22 +140,45 @@
 </template>
 
 <script>
-import { Wallet, Info, ArrowUp, Lock, Clock, ArrowUpRight, ArrowRightLeft, Edit, Trash2, CheckCircle2 } from 'lucide-vue-next';
+import { Wallet, Info, ArrowUp, Lock, Clock, ArrowUpRight, ArrowRightLeft, Edit, Trash2, CheckCircle2, Search, SlidersHorizontal } from 'lucide-vue-next';
 import AddAccountModal from '@/components/AddAccountModal.vue';
 import ActionDropdown from '@/components/ActionDropdown.vue';
 import GenericActionModal from '@/components/GenericActionModal.vue';
 
 export default {
   name: 'MerchantWalletView',
-  components: { Wallet, Info, ArrowUp, Lock, Clock, ArrowUpRight, ArrowRightLeft, AddAccountModal, ActionDropdown, GenericActionModal },
+  components: { Wallet, Info, ArrowUp, Lock, Clock, ArrowUpRight, ArrowRightLeft, AddAccountModal, ActionDropdown, GenericActionModal, Search, SlidersHorizontal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el);
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent);
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent);
+      }
+    }
+  },
   data() {
     return {
+      searchBank: '',
+      showBankFilter: false,
+      bankFilterStatus: 'Todos',
       showAddAccountModal: false,
       editAccountData: null,
       showConfirmModal: false,
       confirmTitle: '',
       confirmDesc: '',
       isDestructive: false,
+      bankAccounts: [
+        { id: 'bb', name: 'Banco do Brasil S.A.', agency: '1234-5', account: '67890-1', logoClass: 'bb', logoText: 'BB', isMain: true },
+        { id: 'itau', name: 'Itaú Unibanco S.A.', agency: '5678', account: '12345-6', logoClass: 'itau', logoText: 'IT', isMain: false },
+        { id: 'nubank', name: 'Nu Pagamentos S.A. (NuBank)', agency: '0001', account: '98765432-1', logoClass: 'nubank', logoText: 'NU', isMain: false }
+      ],
       bankActions: [
         { label: 'Tornar principal', icon: CheckCircle2, actionName: 'set-main' },
         { label: 'Editar conta', icon: Edit, actionName: 'edit' },
@@ -151,10 +186,28 @@ export default {
       ]
     }
   },
+  computed: {
+    filteredBankAccounts() {
+      let list = this.bankAccounts;
+      if (this.searchBank) {
+        const q = this.searchBank.toLowerCase();
+        list = list.filter(a => a.name.toLowerCase().includes(q) || a.account.includes(q) || a.agency.includes(q));
+      }
+      if (this.bankFilterStatus === 'Principal') {
+        list = list.filter(a => a.isMain);
+      } else if (this.bankFilterStatus === 'Secundária') {
+        list = list.filter(a => !a.isMain);
+      }
+      return list;
+    }
+  },
   methods: {
     openAddAccount() {
       this.editAccountData = null;
       this.showAddAccountModal = true;
+    },
+    closeBankFilter() {
+      this.showBankFilter = false;
     },
     handleBankAction(action, accountId) {
       if (action === 'set-main') {
@@ -244,11 +297,19 @@ export default {
 .text-sm { font-size: 0.75rem; font-weight: 500; }
 
 .mt-4 { margin-top: 24px; }
+.form-input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.85rem; outline: none; background: white; }
+.form-select { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.85rem; outline: none; background: white; }
+.btn-secondary { background: white; border: 1px solid var(--border-color); color: var(--text-secondary); }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+.section-container { }
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .section-header h3 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
 .section-header p { font-size: 0.85rem; }

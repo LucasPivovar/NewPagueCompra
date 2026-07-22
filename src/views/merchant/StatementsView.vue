@@ -44,10 +44,10 @@
                   <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-primary);">Período</label>
                   <div class="date-range-input" style="display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0 12px; background: white;">
                     <input type="text" v-model="startDate" placeholder="01/05/2025" style="border: none; outline: none; width: 85px; padding: 8px 0; font-size: 0.85rem; cursor: pointer;">
-                    <Calendar size="14" class="text-muted" />
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">&#x1F4C5;</span>
                     <span style="margin: 0 8px; color: var(--text-muted);">à</span>
                     <input type="text" v-model="endDate" placeholder="21/05/2025" style="border: none; outline: none; width: 85px; padding: 8px 0; font-size: 0.85rem; cursor: pointer;">
-                    <Calendar size="14" class="text-muted" />
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">&#x1F4C5;</span>
                   </div>
                 </div>
 
@@ -135,11 +135,11 @@
 </template>
 
 <script>
-import { ChevronDown, FileText, Calendar, ChevronLeft, ChevronRight, CheckCircle2, Clock, Search, SlidersHorizontal } from 'lucide-vue-next';
+import { ChevronDown, FileText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Search, SlidersHorizontal } from 'lucide-vue-next';
 
 export default {
   name: 'MerchantStatementsView',
-  components: { ChevronDown, FileText, Calendar, ChevronLeft, ChevronRight, CheckCircle2, Clock, Search, SlidersHorizontal },
+  components: { ChevronDown, FileText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Search, SlidersHorizontal },
   directives: {
     'click-outside': {
       mounted(el, binding) {
