@@ -35,30 +35,48 @@
     </div>
 
     <div class="card mt-4">
-      <div class="card-header border-bottom p-4">
-        <h3 class="text-lg">Histórico de Disparos</h3>
-      </div>
-      <div class="card-body filters-row" style="padding: 16px 24px; display: flex; gap: 16px; align-items: center; border-bottom: 1px solid var(--border-color);">
-        <div class="search-input-wrapper" style="flex: 1; position: relative; max-width: 400px;">
-          <input type="text" class="form-input" style="width: 100%; padding: 8px 12px;" v-model="searchQuery" placeholder="Buscar por ID ou lojista...">
-        </div>
-        <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Status</label>
-          <select class="form-select" v-model="filterStatus" style="padding: 8px 12px;">
-            <option>Todos</option>
-            <option>200 OK</option>
-            <option>500 Error</option>
-          </select>
-        </div>
-        <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Evento</label>
-          <select class="form-select" v-model="filterEvento" style="padding: 8px 12px;">
-            <option>Todos</option>
-            <option>charge.paid</option>
-            <option>charge.created</option>
-            <option>charge.expired</option>
-            <option>transfer.completed</option>
-          </select>
+      <div class="card-header border-bottom" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Histórico de Disparos</h3>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <!-- Search -->
+          <div style="position: relative; width: 280px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por ID ou lojista..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+          </div>
+          <!-- Filtros Dropdown -->
+          <div style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="15" />
+              Filtros
+              <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+            </button>
+            <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <strong style="font-size: 0.9rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Status HTTP</label>
+                  <select class="form-select" v-model="filterStatus" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>200 OK</option>
+                    <option>500 Error</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Evento</label>
+                  <select class="form-select" v-model="filterEvento" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>charge.paid</option>
+                    <option>charge.created</option>
+                    <option>charge.expired</option>
+                    <option>transfer.completed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="table-responsive">
@@ -71,6 +89,7 @@
               <th>Endpoint de Destino</th>
               <th>Status HTTP</th>
               <th>Data e Hora</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -83,6 +102,9 @@
                 <span class="badge" :class="'badge-' + wh.statusClass">{{ wh.status }}</span>
               </td>
               <td class="text-sm text-muted">{{ wh.data }}</td>
+              <td class="text-right text-muted">
+                <ActionDropdown :actions="webhookActions" @action="handleWebhookAction($event, wh)" />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -99,11 +121,27 @@
 </template>
 
 <script>
-import { CheckCircle, Send, Clock } from 'lucide-vue-next';
+import { CheckCircle, Send, Clock, Search, SlidersHorizontal, RefreshCw, Eye } from 'lucide-vue-next';
+import ActionDropdown from '@/components/ActionDropdown.vue';
 
 export default {
   name: 'AdminWebhooksView',
-  components: { CheckCircle, Send, Clock },
+  components: { CheckCircle, Send, Clock, Search, SlidersHorizontal, ActionDropdown },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       webhooks: [
@@ -113,12 +151,23 @@ export default {
         { id: 'EVT-m3n4o5p6', lojista: 'Pague Compra', evento: 'charge.expired', endpoint: 'https://pague.com/hooks/in', status: '200 OK', statusClass: 'success-light', data: '22/07/2026 14:20:33' },
         { id: 'EVT-q7r8s9t0', lojista: 'Loja do João', evento: 'charge.created', endpoint: 'https://loja.com/webhooks/pix', status: '200 OK', statusClass: 'success-light', data: '22/07/2026 14:15:10' }
       ],
+      webhookActions: [
+        { label: 'Re-enviar evento', icon: RefreshCw, actionName: 'resend' },
+        { label: 'Ver Payload', icon: Eye, actionName: 'payload' }
+      ],
       searchQuery: '',
       filterStatus: 'Todos',
-      filterEvento: 'Todos'
+      filterEvento: 'Todos',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      let count = 0;
+      if (this.filterStatus !== 'Todos') count++;
+      if (this.filterEvento !== 'Todos') count++;
+      return count;
+    },
     filteredWebhooks() {
       let filtered = this.webhooks;
       if (this.filterStatus !== 'Todos') {
@@ -135,6 +184,23 @@ export default {
         );
       }
       return filtered;
+    }
+  },
+  methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterStatus = 'Todos';
+      this.filterEvento = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
+    },
+    handleWebhookAction(action, wh) {
+      if (action === 'resend') {
+        this.$emit('toast', `Re-enviando evento ${wh.id}...`, 'success');
+      } else if (action === 'payload') {
+        this.$emit('toast', `Payload do evento ${wh.id}`, 'info');
+      }
     }
   }
 }

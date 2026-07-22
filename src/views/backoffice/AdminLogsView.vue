@@ -11,18 +11,39 @@
     </div>
     
     <div class="card mt-4">
-      <div class="card-header border-bottom p-4 flex justify-between items-center flex-wrap gap-4">
-        <div class="search-bar" style="flex: 1; min-width: 250px;">
-          <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por usuário ou ação" style="width: 100%;">
-        </div>
-        <div class="filter-group flex items-center gap-2">
-          <label class="text-sm font-medium text-secondary">Nível</label>
-          <select class="form-select" v-model="filterNivel">
-            <option>Todos</option>
-            <option>Info</option>
-            <option>Aviso</option>
-            <option>Crítico</option>
-          </select>
+      <div class="card-header border-bottom" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Logs do Sistema</h3>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <!-- Search -->
+          <div style="position: relative; width: 280px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por usuário ou ação..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+          </div>
+          <!-- Filtros Dropdown -->
+          <div style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="15" />
+              Filtros
+              <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+            </button>
+            <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <strong style="font-size: 0.9rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Nível</label>
+                  <select class="form-select" v-model="filterNivel" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Info</option>
+                    <option>Aviso</option>
+                    <option>Crítico</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="table-responsive">
@@ -57,8 +78,26 @@
 </template>
 
 <script>
+import { Search, SlidersHorizontal } from 'lucide-vue-next';
+
 export default {
   name: 'AdminLogsView',
+  components: { Search, SlidersHorizontal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       logs: [
@@ -70,10 +109,14 @@ export default {
         { id: 6, data: '22/07/2026 09:05:15', usuario: 'João Pedro', acao: 'Falha de login (Senha incorreta)', ip: '201.55.10.22', nivel: 'Aviso', nivelClass: 'warning-light' }
       ],
       searchQuery: '',
-      filterNivel: 'Todos'
+      filterNivel: 'Todos',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      return this.filterNivel !== 'Todos' ? 1 : 0;
+    },
     filteredLogs() {
       let filtered = this.logs;
       if (this.filterNivel !== 'Todos') {
@@ -84,9 +127,16 @@ export default {
         filtered = filtered.filter(l => 
           l.usuario.toLowerCase().includes(q) ||
           l.acao.toLowerCase().includes(q)
-        );
-      }
       return filtered;
+    }
+  },
+  methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterNivel = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
     }
   }
 }

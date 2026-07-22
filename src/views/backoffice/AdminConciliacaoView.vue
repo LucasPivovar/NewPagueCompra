@@ -35,20 +35,38 @@
     </div>
     
     <div class="card mt-4">
-      <div class="card-header border-bottom p-4">
-        <h3 class="text-lg">Lotes de Repasse (Liquidação)</h3>
-      </div>
-      <div class="card-body filters-row" style="padding: 16px 24px; display: flex; gap: 16px; align-items: center; border-bottom: 1px solid var(--border-color);">
-        <div class="search-input-wrapper" style="flex: 1; position: relative; max-width: 400px;">
-          <input type="text" class="form-input" style="width: 100%; padding: 8px 12px;" v-model="searchQuery" placeholder="Buscar por ID do lote...">
-        </div>
-        <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Status</label>
-          <select class="form-select" v-model="filterStatus" style="padding: 8px 12px;">
-            <option>Todos</option>
-            <option>Conciliado</option>
-            <option>Com Divergência</option>
-          </select>
+      <div class="card-header border-bottom" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Lotes de Repasse (Liquidação)</h3>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <!-- Search -->
+          <div style="position: relative; width: 280px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por ID do lote..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+          </div>
+          <!-- Filtros Dropdown -->
+          <div style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="15" />
+              Filtros
+              <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+            </button>
+            <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <strong style="font-size: 0.9rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Status</label>
+                  <select class="form-select" v-model="filterStatus" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Conciliado</option>
+                    <option>Com Divergência</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="table-responsive">
@@ -60,7 +78,7 @@
               <th>Volume Bruto (R$)</th>
               <th>Volume Líquido (R$)</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -72,8 +90,8 @@
               <td>
                 <span class="badge" :class="'badge-' + lote.statusClass">{{ lote.status }}</span>
               </td>
-              <td>
-                <button class="btn btn-outline-blue text-sm" @click="$emit('toast', 'Detalhes do lote')">Detalhes</button>
+              <td class="text-right text-muted">
+                <ActionDropdown :actions="loteActions" @action="handleLoteAction($event, lote)" />
               </td>
             </tr>
           </tbody>
@@ -84,11 +102,27 @@
 </template>
 
 <script>
-import { Download, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-vue-next';
+import { Download, RefreshCw, CheckCircle, AlertTriangle, Search, SlidersHorizontal, Eye } from 'lucide-vue-next';
+import ActionDropdown from '@/components/ActionDropdown.vue';
 
 export default {
   name: 'AdminConciliacaoView',
-  components: { Download, RefreshCw, CheckCircle, AlertTriangle },
+  components: { Download, RefreshCw, CheckCircle, AlertTriangle, Search, SlidersHorizontal, ActionDropdown },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       lotes: [
@@ -97,11 +131,19 @@ export default {
         { id: 'LOT-20260721-01', data: '21/07/2026 10:00', bruto: '4.850.200,00', liquido: '4.801.698,00', status: 'Com Divergência', statusClass: 'warning-light' },
         { id: 'LOT-20260720-02', data: '20/07/2026 16:30', bruto: '2.950.000,00', liquido: '2.920.500,00', status: 'Conciliado', statusClass: 'success-light' }
       ],
+      loteActions: [
+        { label: 'Ver Detalhes', icon: Eye, actionName: 'view' },
+        { label: 'Reprocessar', icon: RefreshCw, actionName: 'reprocess' }
+      ],
       searchQuery: '',
-      filterStatus: 'Todos'
+      filterStatus: 'Todos',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      return this.filterStatus !== 'Todos' ? 1 : 0;
+    },
     filteredLotes() {
       let filtered = this.lotes;
       if (this.filterStatus !== 'Todos') {
@@ -112,6 +154,22 @@ export default {
         filtered = filtered.filter(l => l.id.toLowerCase().includes(q));
       }
       return filtered;
+    }
+  },
+  methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterStatus = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
+    },
+    handleLoteAction(action, lote) {
+      if (action === 'view') {
+        this.$emit('toast', `Detalhes do lote ${lote.id}`, 'info');
+      } else if (action === 'reprocess') {
+        this.$emit('toast', `Reprocessando lote ${lote.id}...`, 'success');
+      }
     }
   }
 }

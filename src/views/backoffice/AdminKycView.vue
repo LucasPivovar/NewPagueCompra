@@ -10,42 +10,59 @@
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="card mb-4">
-      <div class="card-body filters-row" style="flex-wrap: wrap;">
-        <div class="search-input-wrapper" style="flex: 1; min-width: 250px;">
-          <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por cliente ou documento..." style="width: 100%;">
-        </div>
-        <div class="filter-group">
-          <label>Tipo</label>
-          <select class="form-select" v-model="filterType">
-            <option>Todos</option>
-            <option>PF</option>
-            <option>PJ</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Status</label>
-          <select class="form-select" v-model="filterStatus">
-            <option>Todos</option>
-            <option>Em análise</option>
-            <option>Aprovado</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Risco</label>
-          <select class="form-select" v-model="filterRisk">
-            <option>Todos</option>
-            <option>Baixo</option>
-            <option>Médio</option>
-            <option>Alto</option>
-          </select>
+    <!-- Table with Toolbar -->
+    <div class="card mt-4">
+      <div class="card-header border-bottom" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Fila de Análise</h3>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <!-- Search -->
+          <div style="position: relative; width: 280px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por cliente ou documento..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+          </div>
+          <!-- Filtros Dropdown -->
+          <div style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="15" />
+              Filtros
+              <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+            </button>
+            <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <strong style="font-size: 0.9rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Tipo</label>
+                  <select class="form-select" v-model="filterType" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>PF</option>
+                    <option>PJ</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Status</label>
+                  <select class="form-select" v-model="filterStatus" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Em análise</option>
+                    <option>Aprovado</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Risco</label>
+                  <select class="form-select" v-model="filterRisk" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Baixo</option>
+                    <option>Médio</option>
+                    <option>Alto</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card">
       <div class="table-responsive">
         <table class="table hoverable">
           <thead>
@@ -73,7 +90,9 @@
               <td>
                 <span class="badge" :class="getStatusClass(item.status)">{{ item.status }}</span>
               </td>
-              <td class="text-right text-blue font-bold">Analisar</td>
+              <td class="text-right text-muted" @click.stop>
+                <ActionDropdown :actions="kycActions" @action="handleKycAction($event, item)" />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -154,11 +173,27 @@
 </template>
 
 <script>
-import { Settings, X, FileText, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCcw } from 'lucide-vue-next';
+import { Settings, X, FileText, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCcw, Search, SlidersHorizontal, Eye } from 'lucide-vue-next';
+import ActionDropdown from '@/components/ActionDropdown.vue';
 
 export default {
   name: 'AdminKYCView',
-  components: { Settings, X, FileText, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCcw },
+  components: { Settings, X, FileText, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCcw, Search, SlidersHorizontal, ActionDropdown },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       drawerOpen: false,
@@ -169,13 +204,26 @@ export default {
         { id: 3, client: 'Loja Exemplo SA', type: 'PJ', document: '98.765.432/0001-10', risk: 'Médio', date: '20/05/2025, 16:20', status: 'Em análise' },
         { id: 4, client: 'Maria Oliveira', type: 'PF', document: '987.654.321-00', risk: 'Baixo', date: '20/05/2025, 14:15', status: 'Em análise' }
       ],
+      kycActions: [
+        { label: 'Analisar Documentos', icon: Eye, actionName: 'analyze' },
+        { label: 'Aprovar', icon: CheckCircle2, actionName: 'approve', colorClass: 'text-green' },
+        { label: 'Rejeitar', icon: XCircle, actionName: 'reject', colorClass: 'text-red' }
+      ],
       searchQuery: '',
       filterType: 'Todos',
       filterStatus: 'Em análise',
-      filterRisk: 'Todos'
+      filterRisk: 'Todos',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      let count = 0;
+      if (this.filterType !== 'Todos') count++;
+      if (this.filterStatus !== 'Em análise') count++;
+      if (this.filterRisk !== 'Todos') count++;
+      return count;
+    },
     filteredKyc() {
       let filtered = this.kycList;
       if (this.filterType !== 'Todos') {
@@ -198,6 +246,24 @@ export default {
     }
   },
   methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterType = 'Todos';
+      this.filterStatus = 'Em análise';
+      this.filterRisk = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
+    },
+    handleKycAction(action, item) {
+      if (action === 'analyze') {
+        this.openDrawer(item);
+      } else if (action === 'approve') {
+        this.$emit('toast', `Conta de ${item.client} aprovada com sucesso!`, 'success');
+      } else if (action === 'reject') {
+        this.$emit('toast', `Conta de ${item.client} rejeitada.`, 'error');
+      }
+    },
     getRiskClass(risk) {
       if (risk === 'Baixo') return 'badge-success-light';
       if (risk === 'Médio') return 'badge-warning-light';

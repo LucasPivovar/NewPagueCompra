@@ -11,27 +11,48 @@
     </div>
     
     <div class="card mt-4">
-      <div class="card-header border-bottom p-4 flex justify-between items-center flex-wrap gap-4">
-        <div class="search-bar" style="flex: 1; min-width: 250px;">
-          <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por nome ou e-mail" style="width: 100%;">
-        </div>
-        <div class="filter-group flex items-center gap-2">
-          <label class="text-sm font-medium text-secondary">Cargo</label>
-          <select class="form-select" v-model="filterCargo">
-            <option>Todos</option>
-            <option>Administrador</option>
-            <option>Operador de Risco</option>
-            <option>Suporte</option>
-            <option>Desenvolvedor</option>
-          </select>
-        </div>
-        <div class="filter-group flex items-center gap-2">
-          <label class="text-sm font-medium text-secondary">Status</label>
-          <select class="form-select" v-model="filterStatus">
-            <option>Todos</option>
-            <option>Ativo</option>
-            <option>Bloqueado</option>
-          </select>
+      <div class="card-header border-bottom" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Lista de Usuários</h3>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <!-- Search -->
+          <div style="position: relative; width: 280px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por nome ou e-mail..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+          </div>
+          <!-- Filtros Dropdown -->
+          <div style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="15" />
+              Filtros
+              <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+            </button>
+            <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <strong style="font-size: 0.9rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Cargo</label>
+                  <select class="form-select" v-model="filterCargo" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Administrador</option>
+                    <option>Operador de Risco</option>
+                    <option>Suporte</option>
+                    <option>Desenvolvedor</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Status</label>
+                  <select class="form-select" v-model="filterStatus" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Ativo</option>
+                    <option>Bloqueado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="table-responsive">
@@ -43,7 +64,7 @@
               <th>Cargo / Função</th>
               <th>Status</th>
               <th>Último Acesso</th>
-              <th>Ações</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -61,9 +82,7 @@
               </td>
               <td class="text-sm text-muted">{{ user.ultimoAcesso }}</td>
               <td>
-                <button class="btn-text text-sm" @click="handleAction('edit', user)">Editar</button>
-                <button v-if="user.status === 'Ativo'" class="btn-text text-red text-sm ml-2" @click="handleAction('block', user)">Bloquear</button>
-                <button v-else class="btn-text text-green text-sm ml-2" @click="handleAction('unblock', user)">Desbloquear</button>
+                <ActionDropdown :actions="getUserActions(user)" @action="handleAction($event, user)" />
               </td>
             </tr>
           </tbody>
@@ -84,13 +103,29 @@
 </template>
 
 <script>
-import { Plus } from 'lucide-vue-next';
+import { Plus, Search, SlidersHorizontal, Edit, Lock, Unlock } from 'lucide-vue-next';
 import AddUserModal from '@/components/AddUserModal.vue';
+import ActionDropdown from '@/components/ActionDropdown.vue';
 import GenericActionModal from '@/components/GenericActionModal.vue';
 
 export default {
   name: 'AdminUsersView',
-  components: { Plus, AddUserModal, GenericActionModal },
+  components: { Plus, Search, SlidersHorizontal, AddUserModal, ActionDropdown, GenericActionModal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       showAddModal: false,
@@ -108,10 +143,17 @@ export default {
       ],
       searchQuery: '',
       filterCargo: 'Todos',
-      filterStatus: 'Todos'
+      filterStatus: 'Todos',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      let count = 0;
+      if (this.filterCargo !== 'Todos') count++;
+      if (this.filterStatus !== 'Todos') count++;
+      return count;
+    },
     filteredUsers() {
       let filtered = this.users;
       if (this.filterCargo !== 'Todos') {
@@ -131,6 +173,25 @@ export default {
     }
   },
   methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterCargo = 'Todos';
+      this.filterStatus = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
+    },
+    getUserActions(user) {
+      const actions = [
+        { label: 'Editar Usuário', icon: Edit, actionName: 'edit' }
+      ];
+      if (user.status === 'Ativo') {
+        actions.push({ label: 'Bloquear', icon: Lock, actionName: 'block', colorClass: 'text-red' });
+      } else {
+        actions.push({ label: 'Desbloquear', icon: Unlock, actionName: 'unblock', colorClass: 'text-green' });
+      }
+      return actions;
+    },
     handleAction(action, user) {
       if (action === 'edit') {
         this.editUserData = user;

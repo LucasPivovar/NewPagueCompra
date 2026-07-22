@@ -36,21 +36,39 @@
     </div>
 
     <div class="card mt-4">
-      <div class="card-header border-bottom p-4">
-        <h3 class="text-lg">Histórico Global de Repasses</h3>
-      </div>
-      <div class="card-body filters-row" style="padding: 16px 24px; display: flex; gap: 16px; align-items: center; border-bottom: 1px solid var(--border-color);">
-        <div class="search-input-wrapper" style="flex: 1; position: relative; max-width: 400px;">
-          <input type="text" class="form-input" style="width: 100%; padding: 8px 12px;" v-model="searchQuery" placeholder="Buscar por ID ou empresa...">
-        </div>
-        <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Status</label>
-          <select class="form-select" v-model="filterStatus" style="padding: 8px 12px;">
-            <option>Todos</option>
-            <option>Concluído</option>
-            <option>Em Processamento</option>
-            <option>Falhou</option>
-          </select>
+      <div class="card-header border-bottom" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Histórico Global de Repasses</h3>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <!-- Search -->
+          <div style="position: relative; width: 280px;">
+            <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por ID ou empresa..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+          </div>
+          <!-- Filtros Dropdown -->
+          <div style="position: relative;" v-click-outside="closeFilterDropdown">
+            <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+              <SlidersHorizontal size="15" />
+              Filtros
+              <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+            </button>
+            <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <strong style="font-size: 0.9rem;">Filtros</strong>
+                <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Status</label>
+                  <select class="form-select" v-model="filterStatus" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                    <option>Todos</option>
+                    <option>Concluído</option>
+                    <option>Em Processamento</option>
+                    <option>Falhou</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="table-responsive">
@@ -111,13 +129,28 @@
 </template>
 
 <script>
-import { Download, Activity, Wallet, Clock, Eye, XCircle } from 'lucide-vue-next';
+import { Download, Activity, Wallet, Clock, Eye, XCircle, Search, SlidersHorizontal } from 'lucide-vue-next';
 import ActionDropdown from '@/components/ActionDropdown.vue';
 import GenericActionModal from '@/components/GenericActionModal.vue';
 
 export default {
   name: 'AdminExtratosView',
-  components: { Download, Activity, Wallet, Clock, ActionDropdown, GenericActionModal },
+  components: { Download, Activity, Wallet, Clock, ActionDropdown, GenericActionModal, Search, SlidersHorizontal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       showActionModal: false,
@@ -137,10 +170,14 @@ export default {
         { id: 'TX-8849205', empresa: 'Mercadinho SP', tipo: 'Recebimento Pix', valor: '45,90', status: 'Concluído', statusClass: 'success-light', data: '22/07/2026 13:20' }
       ],
       searchQuery: '',
-      filterStatus: 'Todos'
+      filterStatus: 'Todos',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      return this.filterStatus !== 'Todos' ? 1 : 0;
+    },
     filteredTransactions() {
       let filtered = this.transactions;
       if (this.filterStatus !== 'Todos') {
@@ -157,6 +194,13 @@ export default {
     }
   },
   methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterStatus = 'Todos';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
+    },
     handleAction(action, tx) {
       if (action === 'view') {
         this.$emit('toast', 'Detalhes da transação em desenvolvimento', 'info');

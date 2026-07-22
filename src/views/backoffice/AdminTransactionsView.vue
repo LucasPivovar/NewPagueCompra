@@ -29,33 +29,49 @@
     </div>
 
     <div v-if="currentTab === 'Pix recebidos'">
-      <!-- Filters -->
-      <div class="card mb-4 mt-4">
-      <div class="card-body filters-row">
-        <div class="search-input-wrapper">
-          <Search size="16" class="search-icon" />
-          <input type="text" class="form-input search-input" v-model="searchQuery" placeholder="Buscar por ID, pagador ou recebedor...">
+      <!-- Table with Toolbar -->
+      <div class="card mt-4">
+        <div class="card-header-toolbar" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid var(--border-color);">
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">Lista de Transações</h3>
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <!-- Search -->
+            <div style="position: relative; width: 280px;">
+              <Search size="14" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
+              <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por ID, pagador ou recebedor..." style="width: 100%; padding-left: 34px; font-size: 0.85rem;" />
+            </div>
+            <!-- Filtros Dropdown -->
+            <div style="position: relative;" v-click-outside="closeFilterDropdown">
+              <button class="btn btn-outline-blue" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 14px; font-size: 0.85rem;" @click.stop="showFilterDropdown = !showFilterDropdown">
+                <SlidersHorizontal size="15" />
+                Filtros
+                <span v-if="activeFiltersCount > 0" class="active-badge">{{ activeFiltersCount }}</span>
+              </button>
+              <div v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 260px; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                  <strong style="font-size: 0.9rem;">Filtros</strong>
+                  <button style="border: none; background: transparent; color: var(--accent-blue); font-size: 0.8rem; cursor: pointer;" @click="clearFilters">Limpar</button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                  <div>
+                    <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Status</label>
+                    <select class="form-select" v-model="filterStatus" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                      <option>Todos</option>
+                      <option>Aprovado</option>
+                      <option>Pendente</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-primary);">Ordenar por</label>
+                    <select class="form-select" v-model="sortBy" style="width: 100%; font-size: 0.85rem; cursor: pointer;">
+                      <option>Mais recentes</option>
+                      <option>Mais antigos</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="filter-group">
-          <label>Status</label>
-          <select class="form-select" v-model="filterStatus">
-            <option>Todos</option>
-            <option>Aprovado</option>
-            <option>Pendente</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Ordenar por</label>
-          <select class="form-select" v-model="sortBy">
-            <option>Mais recentes</option>
-            <option>Mais antigos</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card">
       <div class="table-responsive">
         <table class="table hoverable">
           <thead>
@@ -199,13 +215,28 @@
 </template>
 
 <script>
-import { Download, Search, X, User, RefreshCw, Building2, RotateCcw, Eye, RotateCcw as RefundIcon } from 'lucide-vue-next';
+import { Download, Search, X, User, RefreshCw, Building2, RotateCcw, Eye, RotateCcw as RefundIcon, SlidersHorizontal } from 'lucide-vue-next';
 import ActionDropdown from '@/components/ActionDropdown.vue';
 import GenericActionModal from '@/components/GenericActionModal.vue';
 
 export default {
   name: 'AdminTransactionsView',
-  components: { Download, Search, X, User, RefreshCw, Building2, RotateCcw, ActionDropdown, GenericActionModal },
+  components: { Download, Search, X, User, RefreshCw, Building2, RotateCcw, ActionDropdown, GenericActionModal, SlidersHorizontal },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value(event, el)
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
       currentTab: 'Pix recebidos',
@@ -228,10 +259,17 @@ export default {
       ],
       searchQuery: '',
       filterStatus: 'Todos',
-      sortBy: 'Mais recentes'
+      sortBy: 'Mais recentes',
+      showFilterDropdown: false
     }
   },
   computed: {
+    activeFiltersCount() {
+      let count = 0;
+      if (this.filterStatus !== 'Todos') count++;
+      if (this.sortBy !== 'Mais recentes') count++;
+      return count;
+    },
     filteredTransactions() {
       let filtered = this.transactions;
       if (this.filterStatus !== 'Todos') {
@@ -252,6 +290,14 @@ export default {
     }
   },
   methods: {
+    clearFilters() {
+      this.searchQuery = '';
+      this.filterStatus = 'Todos';
+      this.sortBy = 'Mais recentes';
+    },
+    closeFilterDropdown() {
+      this.showFilterDropdown = false;
+    },
     getStatusClass(status) {
       if (status === 'Aprovado') return 'badge-success-light';
       if (status === 'Pendente') return 'badge-warning-light';
