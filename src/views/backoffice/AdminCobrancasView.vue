@@ -67,7 +67,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cob in filteredCobrancas" :key="cob.id">
+            <tr v-for="cob in paginatedCobrancas" :key="cob.id">
               <td><a href="#" class="link-blue font-mono text-sm" @click.prevent="$emit('toast', 'Detalhes da cobrança')">{{ cob.id }}</a></td>
               <td>{{ cob.lojista }}</td>
               <td>
@@ -89,10 +89,11 @@
         </table>
       </div>
       <div class="card-footer p-4 border-top flex justify-between items-center">
-        <span class="text-sm text-muted">Mostrando 5 de 8.210 cobranças</span>
+        <span class="text-sm text-muted">Mostrando {{ filteredCobrancas.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} a {{ Math.min(currentPage * pageSize, filteredCobrancas.length) }} de {{ filteredCobrancas.length }} cobranças</span>
         <div class="pagination flex gap-2">
-          <button class="btn btn-outline-blue text-sm" @click="$emit('toast', 'Página anterior')">Anterior</button>
-          <button class="btn btn-outline-blue text-sm" @click="$emit('toast', 'Próxima página')">Próxima</button>
+          <button class="btn btn-outline-blue text-sm" :disabled="currentPage === 1" @click="prevPage">Anterior</button>
+          <button v-for="p in totalPages" :key="p" class="btn text-sm" :class="currentPage === p ? 'btn-primary' : 'btn-outline-blue'" @click="goToPage(p)">{{ p }}</button>
+          <button class="btn btn-outline-blue text-sm" :disabled="currentPage === totalPages || totalPages === 0" @click="nextPage">Próxima</button>
         </div>
       </div>
     </div>
@@ -152,7 +153,9 @@ export default {
       searchQuery: '',
       filterStatus: 'Todos',
       sortBy: 'Mais recentes',
-      showFilterDropdown: false
+      showFilterDropdown: false,
+      currentPage: 1,
+      pageSize: 3,
     }
   },
   computed: {
@@ -179,6 +182,13 @@ export default {
         return [...filtered].reverse();
       }
       return filtered;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredCobrancas.length / this.pageSize) || 1;
+    },
+    paginatedCobrancas() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredCobrancas.slice(start, start + this.pageSize);
     }
   },
   methods: {
@@ -186,9 +196,19 @@ export default {
       this.searchQuery = '';
       this.filterStatus = 'Todos';
       this.sortBy = 'Mais recentes';
+      this.currentPage = 1;
     },
     closeFilterDropdown() {
       this.showFilterDropdown = false;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+    prevPage() {
+      if (this.currentPage > 1) this.currentPage--;
+    },
+    goToPage(p) {
+      this.currentPage = p;
     },
     handleAction(action, cob) {
       if (action === 'copy') {

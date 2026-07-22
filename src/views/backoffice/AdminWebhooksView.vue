@@ -93,7 +93,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="wh in filteredWebhooks" :key="wh.id">
+            <tr v-for="wh in paginatedWebhooks" :key="wh.id">
               <td><span class="font-mono text-sm">{{ wh.id }}</span></td>
               <td>{{ wh.lojista }}</td>
               <td>{{ wh.evento }}</td>
@@ -110,10 +110,11 @@
         </table>
       </div>
       <div class="card-footer p-4 border-top flex justify-between items-center">
-        <span class="text-sm text-muted">Mostrando 5 últimos disparos globais</span>
+        <span class="text-sm text-muted">Mostrando {{ filteredWebhooks.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} a {{ Math.min(currentPage * pageSize, filteredWebhooks.length) }} de {{ filteredWebhooks.length }} registros</span>
         <div class="pagination flex gap-2">
-          <button class="btn btn-outline-blue text-sm" @click="$emit('toast', 'Página anterior')">Anterior</button>
-          <button class="btn btn-outline-blue text-sm" @click="$emit('toast', 'Próxima página')">Próxima</button>
+          <button class="btn btn-outline-blue text-sm" :disabled="currentPage === 1" @click="prevPage">Anterior</button>
+          <button v-for="p in totalPages" :key="p" class="btn text-sm" :class="currentPage === p ? 'btn-primary' : 'btn-outline-blue'" @click="goToPage(p)">{{ p }}</button>
+          <button class="btn btn-outline-blue text-sm" :disabled="currentPage === totalPages || totalPages === 0" @click="nextPage">Próxima</button>
         </div>
       </div>
     </div>
@@ -158,7 +159,9 @@ export default {
       searchQuery: '',
       filterStatus: 'Todos',
       filterEvento: 'Todos',
-      showFilterDropdown: false
+      showFilterDropdown: false,
+      currentPage: 1,
+      pageSize: 3,
     }
   },
   computed: {
@@ -184,6 +187,13 @@ export default {
         );
       }
       return filtered;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredWebhooks.length / this.pageSize) || 1;
+    },
+    paginatedWebhooks() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredWebhooks.slice(start, start + this.pageSize);
     }
   },
   methods: {
@@ -191,9 +201,19 @@ export default {
       this.searchQuery = '';
       this.filterStatus = 'Todos';
       this.filterEvento = 'Todos';
+      this.currentPage = 1;
     },
     closeFilterDropdown() {
       this.showFilterDropdown = false;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+    prevPage() {
+      if (this.currentPage > 1) this.currentPage--;
+    },
+    goToPage(p) {
+      this.currentPage = p;
     },
     handleWebhookAction(action, wh) {
       if (action === 'resend') {

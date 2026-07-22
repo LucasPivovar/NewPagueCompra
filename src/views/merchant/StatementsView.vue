@@ -99,7 +99,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(tx, idx) in filteredStatements" :key="idx">
+            <tr v-for="(tx, idx) in paginatedStatements" :key="idx">
               <td>{{ tx.date }}</td>
               <td>{{ tx.description }}</td>
               <td><a href="#" class="link-blue">{{ tx.id }}</a></td>
@@ -119,15 +119,11 @@
       </div>
 
       <div class="pagination-footer">
-        <span class="pagination-info">Mostrando 1 a 8 de 120 registros</span>
+        <span class="pagination-info">Mostrando {{ filteredStatements.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} a {{ Math.min(currentPage * pageSize, filteredStatements.length) }} de {{ filteredStatements.length }} registros</span>
         <div class="pagination-controls">
-          <button class="page-btn"><ChevronLeft size="16" /></button>
-          <button class="page-btn active">1</button>
-          <button class="page-btn">2</button>
-          <button class="page-btn">3</button>
-          <span class="page-ellipsis">...</span>
-          <button class="page-btn">15</button>
-          <button class="page-btn"><ChevronRight size="16" /></button>
+          <button class="page-btn" :disabled="currentPage === 1" @click="prevPage"><ChevronLeft size="16" /></button>
+          <button v-for="p in totalPages" :key="p" class="page-btn" :class="{ active: currentPage === p }" @click="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" :disabled="currentPage === totalPages || totalPages === 0" @click="nextPage"><ChevronRight size="16" /></button>
         </div>
       </div>
     </div>
@@ -164,6 +160,8 @@ export default {
       filterStatus: 'Todos',
       sortBy: 'Mais recentes',
       showFilterDropdown: false,
+      currentPage: 1,
+      pageSize: 4,
       statements: [
         { date: '21/05/2025, 10:23', description: 'Cobrança Pix recebida', id: 'PIX-8f3d2e7a1c', in: 'R$ 250,00', out: '–', balance: 'R$ 48.750,32', status: 'Aprovado' },
         { date: '21/05/2025, 09:47', description: 'Saque para conta bancária', id: 'SAC-a91b3c4d5e', in: '–', out: 'R$ 2.500,00', balance: 'R$ 48.500,32', status: 'Concluído' },
@@ -212,6 +210,13 @@ export default {
       }
       
       return filtered;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredStatements.length / this.pageSize) || 1;
+    },
+    paginatedStatements() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredStatements.slice(start, start + this.pageSize);
     }
   },
   methods: {
@@ -227,9 +232,19 @@ export default {
       this.filterType = 'Todos';
       this.filterStatus = 'Todos';
       this.sortBy = 'Mais recentes';
+      this.currentPage = 1;
     },
     closeFilterDropdown() {
       this.showFilterDropdown = false;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+    prevPage() {
+      if (this.currentPage > 1) this.currentPage--;
+    },
+    goToPage(p) {
+      this.currentPage = p;
     }
   }
 }

@@ -87,7 +87,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tx in filteredTransactions" :key="tx.id" @click="openDrawer(tx)" class="clickable-row">
+            <tr v-for="tx in paginatedTransactions" :key="tx.id" @click="openDrawer(tx)" class="clickable-row">
               <td class="text-primary">{{ tx.id }}</td>
               <td><span class="badge badge-green-light">Pix</span></td>
               <td>
@@ -115,6 +115,14 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="pagination-footer" style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <span class="pagination-info" style="font-size: 0.85rem; color: var(--text-secondary);">Mostrando {{ filteredTransactions.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} a {{ Math.min(currentPage * pageSize, filteredTransactions.length) }} de {{ filteredTransactions.length }} registros</span>
+        <div class="pagination-controls" style="display: flex; gap: 4px; align-items: center;">
+          <button class="page-btn" :disabled="currentPage === 1" @click="prevPage"><ChevronLeft size="16" /></button>
+          <button v-for="p in totalPages" :key="p" class="page-btn" :class="{ active: currentPage === p }" @click="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" :disabled="currentPage === totalPages || totalPages === 0" @click="nextPage"><ChevronRight size="16" /></button>
+        </div>
       </div>
     </div>
 
@@ -260,7 +268,9 @@ export default {
       searchQuery: '',
       filterStatus: 'Todos',
       sortBy: 'Mais recentes',
-      showFilterDropdown: false
+      showFilterDropdown: false,
+      currentPage: 1,
+      pageSize: 3,
     }
   },
   computed: {
@@ -287,6 +297,13 @@ export default {
         return [...filtered].reverse();
       }
       return filtered;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredTransactions.length / this.pageSize) || 1;
+    },
+    paginatedTransactions() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredTransactions.slice(start, start + this.pageSize);
     }
   },
   methods: {
@@ -294,9 +311,19 @@ export default {
       this.searchQuery = '';
       this.filterStatus = 'Todos';
       this.sortBy = 'Mais recentes';
+      this.currentPage = 1;
     },
     closeFilterDropdown() {
       this.showFilterDropdown = false;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+    prevPage() {
+      if (this.currentPage > 1) this.currentPage--;
+    },
+    goToPage(p) {
+      this.currentPage = p;
     },
     getStatusClass(status) {
       if (status === 'Aprovado') return 'badge-success-light';

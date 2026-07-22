@@ -70,7 +70,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="client in filteredClients" :key="client.id" @click="openDrawer(client)" class="clickable-row">
+            <tr v-for="client in paginatedClients" :key="client.id" @click="openDrawer(client)" class="clickable-row">
               <td class="text-primary">{{ client.name }}</td>
               <td>{{ client.email }}</td>
               <td>{{ client.document }}</td>
@@ -91,15 +91,11 @@
         </table>
       </div>
       <div class="pagination-footer">
-        <span class="pagination-info">Mostrando 1 a 10 de 1.842 registros</span>
+        <span class="pagination-info">Mostrando {{ filteredClients.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} a {{ Math.min(currentPage * pageSize, filteredClients.length) }} de {{ filteredClients.length }} registros</span>
         <div class="pagination-controls">
-          <button class="page-btn"><ChevronLeft size="16" /></button>
-          <button class="page-btn active">1</button>
-          <button class="page-btn">2</button>
-          <button class="page-btn">3</button>
-          <span class="page-ellipsis">...</span>
-          <button class="page-btn">185</button>
-          <button class="page-btn"><ChevronRight size="16" /></button>
+          <button class="page-btn" :disabled="currentPage === 1" @click="prevPage"><ChevronLeft size="16" /></button>
+          <button v-for="p in totalPages" :key="p" class="page-btn" :class="{ active: currentPage === p }" @click="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" :disabled="currentPage === totalPages || totalPages === 0" @click="nextPage"><ChevronRight size="16" /></button>
         </div>
       </div>
     </div>
@@ -245,7 +241,9 @@ export default {
       searchQuery: '',
       filterStatus: 'Todos',
       filterType: 'Todos',
-      showFilterDropdown: false
+      showFilterDropdown: false,
+      currentPage: 1,
+      pageSize: 3,
     }
   },
   computed: {
@@ -272,6 +270,13 @@ export default {
         );
       }
       return filtered;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredClients.length / this.pageSize) || 1;
+    },
+    paginatedClients() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredClients.slice(start, start + this.pageSize);
     }
   },
   methods: {
@@ -279,9 +284,19 @@ export default {
       this.searchQuery = '';
       this.filterStatus = 'Todos';
       this.filterType = 'Todos';
+      this.currentPage = 1;
     },
     closeFilterDropdown() {
       this.showFilterDropdown = false;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+    prevPage() {
+      if (this.currentPage > 1) this.currentPage--;
+    },
+    goToPage(p) {
+      this.currentPage = p;
     },
     getStatusClass(status) {
       if (status === 'Ativo') return 'badge-success-light';
