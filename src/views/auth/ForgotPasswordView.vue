@@ -19,7 +19,7 @@
             </a>
           </div>
 
-          <h2 style="display: flex; align-items: center; gap: 8px;">Esqueceu a senha? <Lock class="text-blue" size="24"/></h2>
+          <h2>Esqueceu a senha?</h2>
           <p class="auth-subtitle">Informe seu e-mail de cadastro e enviaremos instruções para redefinir sua senha.</p>
 
           <form @submit.prevent="handleReset" class="auth-form" v-if="!emailSent">
@@ -78,11 +78,11 @@
 </template>
 
 <script>
-import { ArrowLeft, MailCheck, CheckCircle2, ShieldCheck, Lock } from 'lucide-vue-next';
+import { ArrowLeft, MailCheck, CheckCircle2, ShieldCheck } from 'lucide-vue-next';
 
 export default {
   name: 'ForgotPasswordView',
-  components: { ArrowLeft, MailCheck, CheckCircle2, ShieldCheck, Lock },
+  components: { ArrowLeft, MailCheck, CheckCircle2, ShieldCheck },
   data() {
     return {
       emailSent: false
