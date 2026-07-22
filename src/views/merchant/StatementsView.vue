@@ -12,35 +12,48 @@
       </div>
     </div>
 
-    <!-- Toolbar de Busca e Filtros Dropdown -->
-    <div class="card mb-4">
-      <div class="card-body" style="padding: 16px 20px;">
-        <div class="table-toolbar" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+    <!-- Tabela de extratos com Toolbar de Busca e Filtros Dropdown -->
+    <div class="card">
+      <div class="card-header border-bottom" style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">Histórico de movimentações</h3>
+
+        <div class="table-toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
           <!-- Search Input -->
-          <div class="search-input-wrapper" style="position: relative; flex: 1; min-width: 240px; max-width: 420px;">
+          <div class="search-input-wrapper" style="position: relative; width: 280px; max-width: 100%;">
             <Search size="16" class="search-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" />
-            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por descrição ou ID..." style="width: 100%; padding-left: 40px;">
+            <input type="text" class="form-input" v-model="searchQuery" placeholder="Buscar por descrição ou ID..." style="width: 100%; padding-left: 38px; cursor: pointer;">
           </div>
 
-          <!-- Filtros Button & Dropdown -->
+          <!-- Filtros Button & Dropdown Popover -->
           <div class="filter-dropdown-wrapper" style="position: relative;" v-click-outside="closeFilterDropdown">
-            <button class="btn btn-outline-blue filter-toggle-btn" @click.stop="showFilterDropdown = !showFilterDropdown">
+            <button class="btn btn-outline-blue filter-toggle-btn" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" @click.stop="showFilterDropdown = !showFilterDropdown">
               <SlidersHorizontal size="16" />
               <span>Filtros</span>
               <span class="active-badge" v-if="activeFiltersCount > 0">{{ activeFiltersCount }}</span>
             </button>
 
             <!-- Dropdown Popover -->
-            <div class="filter-popover card" v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 320px; z-index: 90; box-shadow: var(--shadow-lg); padding: 20px; background: white; border-radius: var(--radius-lg);">
+            <div class="filter-popover card" v-if="showFilterDropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 340px; z-index: 100; box-shadow: var(--shadow-lg); padding: 20px; background: white; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <strong style="font-size: 0.95rem; color: var(--text-primary);">Filtros</strong>
-                <button class="btn-text text-muted" style="font-size: 0.8rem; border: none; background: transparent; cursor: pointer;" @click="clearFilters">Limpar filtros</button>
+                <strong style="font-size: 0.95rem; color: var(--text-primary);">Filtros avançados</strong>
+                <button class="btn-text text-muted" style="font-size: 0.8rem; border: none; background: transparent; cursor: pointer; color: var(--accent-blue);" @click="clearFilters">Limpar filtros</button>
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 16px;">
                 <div class="form-group">
-                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block;">Tipo de movimentação</label>
-                  <select class="form-select" v-model="filterType">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-primary);">Período</label>
+                  <div class="date-range-input" style="display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0 12px; background: white;">
+                    <input type="text" v-model="startDate" placeholder="01/05/2025" style="border: none; outline: none; width: 85px; padding: 8px 0; font-size: 0.85rem; cursor: pointer;">
+                    <Calendar size="14" class="text-muted" />
+                    <span style="margin: 0 8px; color: var(--text-muted);">à</span>
+                    <input type="text" v-model="endDate" placeholder="21/05/2025" style="border: none; outline: none; width: 85px; padding: 8px 0; font-size: 0.85rem; cursor: pointer;">
+                    <Calendar size="14" class="text-muted" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-primary);">Tipo de movimentação</label>
+                  <select class="form-select" v-model="filterType" style="cursor: pointer; width: 100%;">
                     <option>Todos</option>
                     <option>Cobrança Pix recebida</option>
                     <option>Saque para conta bancária</option>
@@ -50,8 +63,8 @@
                 </div>
 
                 <div class="form-group">
-                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block;">Status</label>
-                  <select class="form-select" v-model="filterStatus">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-primary);">Status</label>
+                  <select class="form-select" v-model="filterStatus" style="cursor: pointer; width: 100%;">
                     <option>Todos</option>
                     <option>Aprovado</option>
                     <option>Concluído</option>
@@ -61,8 +74,8 @@
                 </div>
 
                 <div class="form-group">
-                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block;">Ordenar por</label>
-                  <select class="form-select" v-model="sortBy">
+                  <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-primary);">Ordenar por</label>
+                  <select class="form-select" v-model="sortBy" style="cursor: pointer; width: 100%;">
                     <option>Mais recentes</option>
                     <option>Mais antigos</option>
                   </select>
@@ -72,10 +85,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Tabela de extratos -->
-    <div class="card">
       <div class="table-responsive">
         <table class="table">
           <thead>
@@ -149,6 +158,8 @@ export default {
   data() {
     return {
       searchQuery: '',
+      startDate: '',
+      endDate: '',
       filterType: 'Todos',
       filterStatus: 'Todos',
       sortBy: 'Mais recentes',
@@ -171,6 +182,7 @@ export default {
       if (this.filterType !== 'Todos') count++;
       if (this.filterStatus !== 'Todos') count++;
       if (this.sortBy !== 'Mais recentes') count++;
+      if (this.startDate || this.endDate) count++;
       return count;
     },
     filteredStatements() {
@@ -210,6 +222,8 @@ export default {
     },
     clearFilters() {
       this.searchQuery = '';
+      this.startDate = '';
+      this.endDate = '';
       this.filterType = 'Todos';
       this.filterStatus = 'Todos';
       this.sortBy = 'Mais recentes';
