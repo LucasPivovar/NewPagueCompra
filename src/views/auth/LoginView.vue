@@ -13,7 +13,7 @@
 
       <div class="auth-form-container">
         <div class="login-card">
-          <h2 style="display: flex; align-items: center; gap: 8px;">Bem-vindo de volta <Hand class="text-blue" size="24" /></h2>
+          <h2>Bem-vindo de volta</h2>
           <p class="auth-subtitle">Acesse sua conta para continuar</p>
 
           <form @submit.prevent="handleLogin" class="auth-form">
@@ -83,11 +83,11 @@
 </template>
 
 <script>
-import { Eye, Mail, CheckCircle2, ShieldCheck, Hand } from 'lucide-vue-next';
+import { Eye, Mail, CheckCircle2, ShieldCheck } from 'lucide-vue-next';
 
 export default {
   name: 'LoginView',
-  components: { Eye, Mail, CheckCircle2, ShieldCheck, Hand },
+  components: { Eye, Mail, CheckCircle2, ShieldCheck },
   data() {
     return {
       showPassword: false
