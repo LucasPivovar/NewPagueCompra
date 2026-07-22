@@ -75,11 +75,6 @@
     </nav>
 
     <div class="sidebar-footer" style="padding-bottom: 24px;">
-      <!-- Switch Portal button: only in backoffice -->
-      <button v-if="currentPortal === 'backoffice'" class="switch-portal-btn" @click="$emit('switch-portal')">
-        <ArrowRightLeft size="14" />
-        Ir para Seller
-      </button>
 
       <div class="help-card" v-if="currentPortal !== 'backoffice'">
         <div class="help-header">
