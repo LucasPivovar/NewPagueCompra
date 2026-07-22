@@ -44,6 +44,7 @@ const routes = [
   { path: '/auth/register', component: AuthRegisterView },
 
   // Backoffice routes
+  { path: '/admin', redirect: '/admin/overview' },
   { path: '/admin/overview', component: AdminOverviewView },
   { path: '/admin/clients', component: AdminClientsView },
   { path: '/admin/transactions', component: AdminTransactionsView },
