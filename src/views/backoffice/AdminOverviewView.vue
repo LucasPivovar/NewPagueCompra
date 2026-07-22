@@ -209,8 +209,8 @@ export default {
           labels: ['21/04', '26/04', '01/05', '06/05', '11/05', '16/05', '21/05'],
           datasets: [{
             data: [20, 45, 25, 60, 40, 85, 110],
-            borderColor: '#1D61F2', backgroundColor: 'rgba(29, 97, 242, 0.1)', borderWidth: 2, fill: true, tension: 0.4,
-            pointBackgroundColor: '#fff', pointBorderColor: '#1D61F2', pointRadius: 4
+            borderColor: '#005858', backgroundColor: 'rgba(0, 88, 88, 0.1)', borderWidth: 2, fill: true, tension: 0.4,
+            pointBackgroundColor: '#fff', pointBorderColor: '#005858', pointRadius: 4
           }]
         },
         options: {

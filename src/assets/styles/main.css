@@ -15,9 +15,9 @@
   --text-secondary: #475569;     /* Secondary text */
   --text-muted: #64748B;         /* Muted label text */
 
-  --accent-blue: #1D61F2;        /* Official Pague Compra Electric Blue */
-  --accent-blue-hover: #154EC2;
-  --accent-blue-light: #EFF6FF;
+  --accent-blue: #005858;        /* Official Pague Compra Teal Green (#005858) */
+  --accent-blue-hover: #004040;
+  --accent-blue-light: #E6F2F2;
 
   --accent-green: #10B981;
   --accent-green-bg: #ECFDF5;
@@ -28,8 +28,8 @@
   --accent-red: #EF4444;
   --accent-red-bg: #FEF2F2;
 
-  --sidebar-bg: #03102C;         /* Deep Navy Blue Sidebar (Identical to image) */
-  --sidebar-border: #0F214A;
+  --sidebar-bg: #003838;         /* Deep Teal Sidebar */
+  --sidebar-border: #004545;
 
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
@@ -163,31 +163,26 @@ h1, h2, h3, h4, h5, h6 {
   padding: 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.sidebar-logo-full {
+  max-height: 48px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 .brand-logo {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, #1D61F2 0%, #3B82F6 100%);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
 }
 
-.brand-info h1 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #FFFFFF;
-  letter-spacing: -0.02em;
-}
-
-.brand-info p {
-  font-size: 0.7rem;
-  color: #94A3B8;
+.brand-logo-img {
+  max-height: 44px;
+  width: auto;
+  object-fit: contain;
 }
 
 .portal-badge {
@@ -201,7 +196,7 @@ h1, h2, h3, h4, h5, h6 {
   margin: 12px 20px 4px;
 }
 
-.portal-badge.merchant { background: rgba(29, 97, 242, 0.2); color: #60A5FA; border: 1px solid rgba(29, 97, 242, 0.4); }
+.portal-badge.merchant { background: rgba(0, 88, 88, 0.25); color: #2DD4BF; border: 1px solid rgba(45, 212, 191, 0.4); }
 .portal-badge.backoffice { background: rgba(139, 92, 246, 0.2); color: #C4B5FD; border: 1px solid rgba(139, 92, 246, 0.4); }
 
 .sidebar-nav {
@@ -217,18 +212,30 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  color: #94A3B8;
+  padding: 11px 16px;
+  color: #CBD5E1;
   border-radius: var(--radius-md);
   text-decoration: none;
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.nav-item:hover { background-color: rgba(255, 255, 255, 0.08); color: #FFFFFF; }
-.nav-item.active { background-color: var(--accent-blue); color: #FFFFFF; font-weight: 600; box-shadow: 0 4px 12px rgba(29, 97, 242, 0.35); }
+.nav-item:hover { background-color: rgba(255, 255, 255, 0.12); color: #FFFFFF; }
+.nav-item.active { background-color: var(--accent-blue); color: #FFFFFF; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.15); }
+.nav-item.logout-item {
+  color: #F87171;
+  margin-top: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  justify-content: center;
+}
+.nav-item.logout-item:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #FFFFFF;
+  border-color: rgba(239, 68, 68, 0.5);
+}
 
 .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 

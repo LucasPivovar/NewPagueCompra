@@ -288,11 +288,11 @@ export default {
           datasets: [{
             label: 'Volume (R$)',
             data: [2000, 4500, 2500, 6000, 4000, 8500, 11000],
-            borderColor: '#1D61F2',
+            borderColor: '#005858',
             backgroundColor: gradient,
             borderWidth: 2,
             pointBackgroundColor: '#fff',
-            pointBorderColor: '#1D61F2',
+            pointBorderColor: '#005858',
             pointBorderWidth: 2,
             pointRadius: 4,
             fill: true,

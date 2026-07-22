@@ -3,12 +3,7 @@
     <!-- Lado Azul (Formulário) -->
     <div class="auth-side-blue" style="overflow-y: auto;">
       <div class="brand-top">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#3B82F6"/>
-          <path d="M2 17L12 22L22 17" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="brand-name">Pague Compra</span>
+        <img src="/download.png" alt="Pague Compra" style="height: 52px; width: auto;" />
       </div>
 
       <div class="auth-form-container">
@@ -266,7 +261,7 @@ export default {
 
 /* Lado Azul */
 .auth-side-blue {
-  background-color: #03102C;
+  background: radial-gradient(circle at 35% 35%, #004d4d 0%, #003838 80%);
   display: flex;
   flex-direction: column;
   position: relative;
