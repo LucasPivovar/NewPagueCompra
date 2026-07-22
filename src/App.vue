@@ -7,6 +7,7 @@
       :activeTab="currentRouteTab" 
       :isOpen="isSidebarOpen"
       @change-tab="navigateToTab"
+      @switch-portal="switchPortal"
       @logout="$router.push('/auth/login')"
       @close-sidebar="isSidebarOpen = false"
     />
@@ -95,12 +96,26 @@ export default {
     },
     currentRouteTab() {
       const p = this.$route.path;
+      // Merchant tabs
       if (p === '/dashboard') return 'visao-geral';
       if (p === '/wallet') return 'carteira';
       if (p === '/statements') return 'extratos';
       if (p === '/connections') return 'conexoes';
       if (p === '/account') return 'minha-conta';
       if (p === '/atendimento') return 'atendimento';
+      // Backoffice tabs
+      if (p === '/admin/overview') return 'admin-overview';
+      if (p === '/admin/clients') return 'admin-clients';
+      if (p === '/admin/transactions') return 'admin-transactions';
+      if (p === '/admin/cobrancas') return 'admin-cobrancas';
+      if (p === '/admin/extratos') return 'admin-extratos';
+      if (p === '/admin/kyc') return 'admin-kyc';
+      if (p === '/admin/users') return 'admin-users';
+      if (p === '/admin/webhooks') return 'admin-webhooks';
+      if (p === '/admin/fees') return 'admin-fees';
+      if (p === '/admin/logs') return 'admin-logs';
+      if (p === '/admin/conciliacao') return 'admin-conciliacao';
+      if (p === '/admin/config') return 'admin-config';
       return 'visao-geral';
     }
   },
@@ -120,15 +135,29 @@ export default {
     },
     navigateToTab(tab) {
       const map = {
+        // Merchant
         'visao-geral': '/dashboard',
         'carteira': '/wallet',
         'extratos': '/statements',
         'conexoes': '/connections',
         'minha-conta': '/account',
-        'atendimento': '/atendimento'
+        'atendimento': '/atendimento',
+        // Backoffice
+        'admin-overview': '/admin/overview',
+        'admin-clients': '/admin/clients',
+        'admin-transactions': '/admin/transactions',
+        'admin-cobrancas': '/admin/cobrancas',
+        'admin-extratos': '/admin/extratos',
+        'admin-kyc': '/admin/kyc',
+        'admin-users': '/admin/users',
+        'admin-webhooks': '/admin/webhooks',
+        'admin-fees': '/admin/fees',
+        'admin-logs': '/admin/logs',
+        'admin-conciliacao': '/admin/conciliacao',
+        'admin-config': '/admin/config'
       };
       if (map[tab]) this.$router.push(map[tab]);
-      this.isSidebarOpen = false; // Close sidebar on mobile after navigation
+      this.isSidebarOpen = false;
     },
     handleWithdraw(amount) {
       this.wallet.saldoDisponivel -= amount;

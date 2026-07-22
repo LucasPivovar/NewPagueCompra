@@ -260,8 +260,8 @@ export default {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
   margin-bottom: 32px;
 }
 .kpi-card {
